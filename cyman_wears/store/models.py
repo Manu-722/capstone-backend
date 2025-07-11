@@ -23,3 +23,13 @@ class CartItem(models.Model):
         if self.quantity >= 2:
             return self.total_price() * 0.93  # 7% discount
         return self.total_price()
+    
+class Order(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    items = models.ManyToManyField(CartItem)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Order #{self.id} by {self.user.username}"

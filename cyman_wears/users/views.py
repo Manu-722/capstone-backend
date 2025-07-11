@@ -1,10 +1,17 @@
-from django.shortcuts import render
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from django.urls import path
+from django.contrib.auth.models import User
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
 
+@csrf_exempt
+def register_user(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        username = data.get('username')
+        password = data.get('password')
 
-# Create your views here.
-urlpatterns = [
-    path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-]
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({'error': 'Username already exists'}, status=400)
+
+        user = User.objects.create_user(username=username, password=password)
+        return JsonResponse({'message': 'User registered successfully'})
