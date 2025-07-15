@@ -1,7 +1,8 @@
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json, requests, datetime, base64
 from payments.utils.daraja import get_access_token
+from .models import PaymentTransaction
 
 @csrf_exempt
 def checkout_view(request):
@@ -11,9 +12,10 @@ def checkout_view(request):
             print("Order received:", json.dumps(data, indent=2))
             return JsonResponse({'message': 'Order received successfully'}, status=200)
         except Exception as e:
-            print("Error:", str(e))
+            print("Checkout Error:", str(e))
             return JsonResponse({'error': 'Invalid data'}, status=400)
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
 
 @csrf_exempt
 def initiate_stk_push(request):
@@ -68,6 +70,7 @@ def initiate_stk_push(request):
         print("STK Push Error:", str(e))
         return JsonResponse({'error': 'Failed to initiate payment'}, status=500)
 
+
 @csrf_exempt
 def mpesa_callback(request):
     if request.method == 'POST':
@@ -75,21 +78,28 @@ def mpesa_callback(request):
             body = json.loads(request.body)
             print("M-Pesa Callback received:", json.dumps(body, indent=2))
 
-            result_code = body.get('Body', {}).get('stkCallback', {}).get('ResultCode')
-            result_desc = body.get('Body', {}).get('stkCallback', {}).get('ResultDesc')
-            checkout_request_id = body.get('Body', {}).get('stkCallback', {}).get('CheckoutRequestID')
+            stk = body.get('Body', {}).get('stkCallback', {})
+            result_code = stk.get('ResultCode')
+            result_desc = stk.get('ResultDesc')
+            checkout_request_id = stk.get('CheckoutRequestID')
+            metadata = stk.get('CallbackMetadata', {}).get('Item', [])
+
+            transaction_data = {item['Name']: item.get('Value') for item in metadata}
+
+            # Save transaction to DB
+            PaymentTransaction.objects.create(
+                name='',  # Optional: add logic to attach user name
+                phone=transaction_data.get('PhoneNumber'),
+                amount=transaction_data.get('Amount', 0),
+                transaction_id=transaction_data.get('MpesaReceiptNumber') or f"FAILED-{checkout_request_id}",
+                checkout_request_id=checkout_request_id,
+                result_code=result_code,
+                result_description=result_desc
+            )
 
             if result_code == 0:
-                # Transaction successful
-                metadata = body['Body']['stkCallback'].get('CallbackMetadata', {}).get('Item', [])
-                transaction_data = {item['Name']: item.get('Value') for item in metadata}
-                print("Transaction Metadata:", json.dumps(transaction_data, indent=2))
-
-                # You could save transaction_data into your DB here
-
-                return JsonResponse({'message': 'Payment successful', 'data': transaction_data})
+                return JsonResponse({'message': 'Payment successful'})
             else:
-                print("Transaction Failed:", result_desc)
                 return JsonResponse({'message': 'Payment failed', 'description': result_desc})
 
         except Exception as e:
@@ -98,9 +108,11 @@ def mpesa_callback(request):
 
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+
 @csrf_exempt
 def process_payment(request):
     return JsonResponse({'message': 'Process payment placeholder'})
+
 
 @csrf_exempt
 def create_payment(request):

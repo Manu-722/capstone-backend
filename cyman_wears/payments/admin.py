@@ -1,8 +1,8 @@
 from django.contrib import admin
 from .models import PaymentTransaction
 
-# Register your models here.
 @admin.register(PaymentTransaction)
 class PaymentTransactionAdmin(admin.ModelAdmin):
-    list_display = ('name', 'phone', 'amount', 'transaction_id', 'timestamp')
-    search_fields = ('name', 'phone', 'transaction_id')
+    list_display = ('transaction_id', 'phone', 'amount', 'result_code', 'timestamp')
+    search_fields = ('transaction_id', 'phone')
+    list_filter = ('result_code',)
