@@ -55,6 +55,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',  # Vite frontend URL
+]
+
 
 ROOT_URLCONF = 'cyman_wears.urls'
 CORS_ALLOW_ALL_ORIGINS = True

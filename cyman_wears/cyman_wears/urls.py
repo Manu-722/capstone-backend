@@ -19,6 +19,8 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.http import HttpResponseRedirect
 
+
+
 def redirect_root(request):
     return HttpResponseRedirect('/api/shoes/')
 
@@ -31,6 +33,9 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/', include('users.urls')),
-    path('api/payments/', include('payments.urls')),
+    path('api/', include('payments.urls')),
+    path('', include('payments.urls')),
+    
+
 ]
 

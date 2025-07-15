@@ -1,17 +1,32 @@
 from django.contrib.auth.models import User
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-import json
+from django.contrib.auth import authenticate
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
-@csrf_exempt
+@api_view(['POST'])
 def register_user(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        username = data.get('username')
-        password = data.get('password')
+    data = request.data
+    if User.objects.filter(username=data['username']).exists():
+        return Response({'error': 'Username already exists'}, status=400)
 
-        if User.objects.filter(username=username).exists():
-            return JsonResponse({'error': 'Username already exists'}, status=400)
+    user = User.objects.create_user(
+        username=data['username'],
+        email=data['email'],
+        password=data['password']
+    )
+    return Response({'message': 'User registered successfully'})
 
-        user = User.objects.create_user(username=username, password=password)
-        return JsonResponse({'message': 'User registered successfully'})
+@api_view(['POST'])
+def login_user(request):
+    data = request.data
+    user = authenticate(username=data['username'], password=data['password'])
+
+    if user:
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'username': user.username
+        })
+    return Response({'error': 'Invalid credentials'}, status=401)
