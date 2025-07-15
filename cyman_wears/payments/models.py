@@ -1,7 +1,10 @@
 from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class PaymentTransaction(models.Model):
-    name = models.CharField(max_length=255, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     phone = models.CharField(max_length=20)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     transaction_id = models.CharField(max_length=100, unique=True)
@@ -11,4 +14,4 @@ class PaymentTransaction(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.transaction_id} - {self.amount} KES"
+        return f"{self.user or 'Anonymous'} - {self.transaction_id}"

@@ -3,6 +3,19 @@ from django.views.decorators.csrf import csrf_exempt
 import json, requests, datetime, base64
 from payments.utils.daraja import get_access_token
 from .models import PaymentTransaction
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+def normalize_phone(phone):
+    phone = str(phone).strip()
+    if phone.startswith('07'):
+        phone = '254' + phone[1:]
+    elif phone.startswith('+254'):
+        phone = phone[1:]
+    return phone
+
 
 @csrf_exempt
 def checkout_view(request):
@@ -24,7 +37,7 @@ def initiate_stk_push(request):
 
     try:
         body = json.loads(request.body)
-        phone = body.get('phone')
+        phone = normalize_phone(body.get('phone'))
         amount = int(body.get('amount'))
 
         if not phone or not amount:
@@ -85,11 +98,13 @@ def mpesa_callback(request):
             metadata = stk.get('CallbackMetadata', {}).get('Item', [])
 
             transaction_data = {item['Name']: item.get('Value') for item in metadata}
+            phone = normalize_phone(transaction_data.get('PhoneNumber'))
 
-            # Save transaction to DB
+            matched_user = User.objects.filter(phone=phone).first()  # Adjust if using Profile
+
             PaymentTransaction.objects.create(
-                name='',  # Optional: add logic to attach user name
-                phone=transaction_data.get('PhoneNumber'),
+                user=matched_user,
+                phone=phone,
                 amount=transaction_data.get('Amount', 0),
                 transaction_id=transaction_data.get('MpesaReceiptNumber') or f"FAILED-{checkout_request_id}",
                 checkout_request_id=checkout_request_id,
