@@ -1,12 +1,15 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import get_user_model
+from django.views import View
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
+
 import json, requests, datetime, base64
 from payments.utils.daraja import get_access_token
 from .models import PaymentTransaction
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
-
 
 def normalize_phone(phone):
     phone = str(phone).strip()
@@ -15,7 +18,6 @@ def normalize_phone(phone):
     elif phone.startswith('+254'):
         phone = phone[1:]
     return phone
-
 
 @csrf_exempt
 def checkout_view(request):
@@ -28,7 +30,6 @@ def checkout_view(request):
             print("Checkout Error:", str(e))
             return JsonResponse({'error': 'Invalid data'}, status=400)
     return JsonResponse({'error': 'Method not allowed'}, status=405)
-
 
 @csrf_exempt
 def initiate_stk_push(request):
@@ -83,7 +84,6 @@ def initiate_stk_push(request):
         print("STK Push Error:", str(e))
         return JsonResponse({'error': 'Failed to initiate payment'}, status=500)
 
-
 @csrf_exempt
 def mpesa_callback(request):
     if request.method == 'POST':
@@ -96,10 +96,9 @@ def mpesa_callback(request):
             result_desc = stk.get('ResultDesc')
             checkout_request_id = stk.get('CheckoutRequestID')
             metadata = stk.get('CallbackMetadata', {}).get('Item', [])
-
             transaction_data = {item['Name']: item.get('Value') for item in metadata}
-            phone = normalize_phone(transaction_data.get('PhoneNumber'))
 
+            phone = normalize_phone(transaction_data.get('PhoneNumber'))
             matched_user = User.objects.filter(phone=phone).first()  # Adjust if using Profile
 
             PaymentTransaction.objects.create(
@@ -123,11 +122,26 @@ def mpesa_callback(request):
 
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(login_required, name='dispatch')
+class UserTransactionsView(View):
+    def get(self, request):
+        transactions = PaymentTransaction.objects.filter(user=request.user).order_by('-timestamp')
+        data = [
+            {
+                "transaction_id": tx.transaction_id,
+                "amount": tx.amount,
+                "phone": tx.phone,
+                "date": tx.timestamp.strftime('%Y-%m-%d %H:%M'),
+                "status": "Success" if tx.result_code == 0 else "Failed"
+            }
+            for tx in transactions
+        ]
+        return JsonResponse({"transactions": data}, status=200)
 
 @csrf_exempt
 def process_payment(request):
     return JsonResponse({'message': 'Process payment placeholder'})
-
 
 @csrf_exempt
 def create_payment(request):
