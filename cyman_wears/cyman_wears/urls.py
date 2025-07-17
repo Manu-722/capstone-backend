@@ -39,6 +39,7 @@ urlpatterns = [
     path('api/', include('payments.urls')),
     # path('', include('payments.urls')),
     
+    
 
 ]
 if settings.DEBUG:
