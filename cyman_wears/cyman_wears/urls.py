@@ -38,6 +38,7 @@ urlpatterns = [
     path('api/auth/', include('users.urls')),
     path('api/', include('payments.urls')),
     # path('', include('payments.urls')),
+    path('api/', include('users.urls')),
     
     
 
