@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -142,3 +143,26 @@ REST_FRAMEWORK = {
 MIDDLEWARE = ['corsheaders.middleware.CorsMiddleware'] + MIDDLEWARE
 
 CORS_ALLOW_ALL_ORIGINS = True  
+
+# STRIPE_SECRET_KEY = 'sk_test_51Rll5GR31F13pFA0SojXqH7ehLRNaQvKSyLUY5KHl768f10TslCi1LTUwopZ2cWHov7kzTjzkcbQhLpbEoDchxpi00coPVs7gC'  
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp-relay.brevo.com'  
+# EMAIL_PORT = 587
+# EMAIL_HOST_USER = '9254fc001@smtp-brevo.com'
+# EMAIL_HOST_PASSWORD = 'xsmtpsib-63791cf6a2083f4cab4e0a0fc4d3833f9d6d05ef1855e1f25679f29dea01e0bd-rhRvWJP90yfLq3cY'
+# EMAIL_USE_TLS = True
+# DEFAULT_FROM_EMAIL = 'no-reply@cymanwear.com'
+# pk_test_51Rll5GR31F13pFA0W8yyMJy7zawbfLBRIBjeGCYyiPeu4efcp21c7KOfiDZ8ojL5MPVui41VLSMCheVAQ5krb9Lv00zt7Mk4ez
+from decouple import config
+
+CONSUMER_KEY = config('CONSUMER_KEY')
+CONSUMER_SECRET = config('CONSUMER_SECRET')
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = 'no-reply@cymanwear.com'
