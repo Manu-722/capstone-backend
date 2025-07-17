@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Shoe, CartItem, Order
 import json
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 def landing(request):
@@ -14,19 +14,21 @@ def landing(request):
 #     shoes = Shoe.objects.all().values()
 #     return JsonResponse(list(shoes), safe=False)
 
-@login_required
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_cart(request):
-    cart = CartItem.objects.filter(user=request.user)
+    cart_items = CartItem.objects.filter(user=request.user)
     data = [{
         'id': item.id,
         'shoe': item.shoe.name,
+        'image': str(item.shoe.image),
+        'description': item.shoe.description,
         'quantity': item.quantity,
         'price': float(item.shoe.price),
+        'discounted': float(item.discounted_price()),  # Include discount logic
         'total': float(item.total_price()),
-        'discounted': float(item.discounted_price())
-    } for item in cart]
-    return JsonResponse(data, safe=False)
-
+    } for item in cart_items]
+    return Response(data)
 @csrf_exempt
 @login_required
 def add_to_cart(request):
