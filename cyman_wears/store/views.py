@@ -3,13 +3,16 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Shoe, CartItem, Order
 import json
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 
 def landing(request):
     return HttpResponse("Welcome to Cyman Wears API!")
 
-def get_shoes(request):
-    shoes = Shoe.objects.all().values()
-    return JsonResponse(list(shoes), safe=False)
+# def get_shoes(request):
+#     shoes = Shoe.objects.all().values()
+#     return JsonResponse(list(shoes), safe=False)
 
 @login_required
 def get_cart(request):
@@ -63,3 +66,18 @@ def place_order(request):
         order.save()
 
         return JsonResponse({'message': 'Order placed', 'order_id': order.id})
+    
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_shoes(request):
+    shoes = Shoe.objects.all().order_by('-created_at')
+    data = [{
+        'id': shoe.id,
+        'name': shoe.name,
+        'price': float(shoe.price),
+        'image': str(shoe.image),
+        'description': shoe.description,
+        'in_stock': shoe.in_stock,
+        'created_at': shoe.created_at.isoformat(),
+    } for shoe in shoes]
+    return Response(data)
