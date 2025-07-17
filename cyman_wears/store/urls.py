@@ -1,10 +1,10 @@
 from django.urls import path
-from .views import get_shoes, get_cart, add_to_cart, landing
-from . import views
+from .views import get_shoes, get_cart, add_to_cart, landing, place_order
 
 urlpatterns = [
     path('', landing),
     path('shoes/', get_shoes),
     path('cart/', get_cart),
     path('cart/add/', add_to_cart),
+    path('order/place/', place_order),
 ]
