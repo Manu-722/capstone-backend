@@ -2,6 +2,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from .models import Shoe, CartItem, Order
+from users.models import Profile  # 👈 required for fallback
 import json
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -27,7 +28,7 @@ def get_shoes(request):
     } for shoe in shoes]
     return Response(data)
 
-# 🛒 Get cart items (if using CartItem model)
+# 🛒 Get cart items (model-based flow)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_cart(request):
@@ -44,7 +45,7 @@ def get_cart(request):
     } for item in cart_items]
     return Response(data)
 
-# ➕ Add to cart (model-based flow)
+# ➕ Add to cart
 @csrf_exempt
 @login_required
 def add_to_cart(request):
@@ -90,26 +91,29 @@ def place_order(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_cart(request):
-    return Response({'items': request.user.profile.cart_data or []})
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    return Response({'items': profile.cart_data or []})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def persist_user_cart(request):
-    request.user.profile.cart_data = request.data
-    request.user.profile.save()
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    profile.cart_data = request.data
+    profile.save()
     return Response({'message': 'Cart saved successfully'})
 
 # 💖 Wishlist views
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_wishlist(request):
-    return Response({'items': request.user.profile.wishlist or []})
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    return Response({'items': profile.wishlist or []})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_to_wishlist(request):
     item = request.data
-    profile = request.user.profile
+    profile, _ = Profile.objects.get_or_create(user=request.user)
     profile.wishlist.append(item)
     profile.save()
     return Response({'message': 'Added to wishlist'})
@@ -117,7 +121,7 @@ def add_to_wishlist(request):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def remove_from_wishlist(request, item_id):
-    profile = request.user.profile
+    profile, _ = Profile.objects.get_or_create(user=request.user)
     profile.wishlist = [i for i in profile.wishlist if i.get('id') != item_id]
     profile.save()
     return Response({'message': 'Removed from wishlist'})
