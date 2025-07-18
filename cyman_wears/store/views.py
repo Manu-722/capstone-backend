@@ -1,19 +1,33 @@
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from .models import Shoe, CartItem, Order
 import json
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+# 🔷 Public landing
 def landing(request):
     return HttpResponse("Welcome to Cyman Wears API!")
 
-# def get_shoes(request):
-#     shoes = Shoe.objects.all().values()
-#     return JsonResponse(list(shoes), safe=False)
+# 👟 Get all shoes (public)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_shoes(request):
+    shoes = Shoe.objects.all().order_by('-created_at')
+    data = [{
+        'id': shoe.id,
+        'name': shoe.name,
+        'price': float(shoe.price),
+        'image': str(shoe.image),
+        'description': shoe.description,
+        'in_stock': shoe.in_stock,
+        'created_at': shoe.created_at.isoformat(),
+    } for shoe in shoes]
+    return Response(data)
 
+# 🛒 Get cart items (if using CartItem model)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_cart(request):
@@ -25,10 +39,12 @@ def get_cart(request):
         'description': item.shoe.description,
         'quantity': item.quantity,
         'price': float(item.shoe.price),
-        'discounted': float(item.discounted_price()),  # Include discount logic
+        'discounted': float(item.discounted_price()),
         'total': float(item.total_price()),
     } for item in cart_items]
     return Response(data)
+
+# ➕ Add to cart (model-based flow)
 @csrf_exempt
 @login_required
 def add_to_cart(request):
@@ -42,6 +58,7 @@ def add_to_cart(request):
         item.save()
         return JsonResponse({'message': 'Item added to cart'})
 
+# ✅ Place an order
 @csrf_exempt
 @login_required
 def place_order(request):
@@ -68,18 +85,39 @@ def place_order(request):
         order.save()
 
         return JsonResponse({'message': 'Order placed', 'order_id': order.id})
-    
+
+# 🔐 Persistent cart via user profile (JSONField)
 @api_view(['GET'])
-@permission_classes([AllowAny])
-def get_shoes(request):
-    shoes = Shoe.objects.all().order_by('-created_at')
-    data = [{
-        'id': shoe.id,
-        'name': shoe.name,
-        'price': float(shoe.price),
-        'image': str(shoe.image),
-        'description': shoe.description,
-        'in_stock': shoe.in_stock,
-        'created_at': shoe.created_at.isoformat(),
-    } for shoe in shoes]
-    return Response(data)
+@permission_classes([IsAuthenticated])
+def get_user_cart(request):
+    return Response({'items': request.user.profile.cart_data or []})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def persist_user_cart(request):
+    request.user.profile.cart_data = request.data
+    request.user.profile.save()
+    return Response({'message': 'Cart saved successfully'})
+
+# 💖 Wishlist views
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_wishlist(request):
+    return Response({'items': request.user.profile.wishlist or []})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_to_wishlist(request):
+    item = request.data
+    profile = request.user.profile
+    profile.wishlist.append(item)
+    profile.save()
+    return Response({'message': 'Added to wishlist'})
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def remove_from_wishlist(request, item_id):
+    profile = request.user.profile
+    profile.wishlist = [i for i in profile.wishlist if i.get('id') != item_id]
+    profile.save()
+    return Response({'message': 'Removed from wishlist'})
