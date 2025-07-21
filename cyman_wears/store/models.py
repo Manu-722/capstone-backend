@@ -9,6 +9,16 @@ class Shoe(models.Model):
     in_stock = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)  # tracks creation time
 
+    CATEGORY_CHOICES = [
+        ('Sneakers', 'Sneakers'),
+        ('Boots', 'Boots'),
+        ('Sandals', 'Sandals'),
+        ('Loafers', 'Loafers'),
+        ('Formal', 'Formal'),
+    ]
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='Sneakers')
+    sizes = models.JSONField(default=list, blank=True)
+
     def __str__(self):
         return self.name
 

@@ -4,9 +4,11 @@ from django.utils.html import format_html
 
 @admin.register(Shoe)
 class ShoeAdmin(admin.ModelAdmin):
-    list_display = ['name', 'price', 'in_stock', 'created_at', 'image_preview']
+    list_display = ['name', 'price', 'in_stock', 'category', 'created_at', 'image_preview']
     search_fields = ['name']
-    list_filter = ['in_stock']
+    list_filter = ['in_stock', 'category']
+    fields = ['name', 'price', 'category', 'sizes', 'image', 'description', 'in_stock', 'created_at']
+    readonly_fields = ['created_at', 'image_preview']
 
     def image_preview(self, obj):
         if obj.image:
