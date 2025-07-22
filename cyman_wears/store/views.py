@@ -2,13 +2,13 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from .models import Shoe, CartItem, Order
-from users.models import Profile  # 👈 required for fallback
+from users.models import Profile  
 import json
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-# 🔷 Public landing
+#  Public landing
 def landing(request):
     return HttpResponse("Welcome to Cyman Wears API!")
 
@@ -30,7 +30,7 @@ def get_shoes(request):
     } for shoe in shoes]
     return Response(data)
 
-# 🛒 Get cart items (model-based flow)
+#  Get cart items (model-based flow)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_cart(request):
@@ -47,7 +47,7 @@ def get_cart(request):
     } for item in cart_items]
     return Response(data)
 
-# ➕ Add to cart
+#  Add to cart
 @csrf_exempt
 @login_required
 def add_to_cart(request):
@@ -61,7 +61,7 @@ def add_to_cart(request):
         item.save()
         return JsonResponse({'message': 'Item added to cart'})
 
-# ✅ Place an order
+# Place an order
 @csrf_exempt
 @login_required
 def place_order(request):
@@ -89,7 +89,7 @@ def place_order(request):
 
         return JsonResponse({'message': 'Order placed', 'order_id': order.id})
 
-# 🔐 Persistent cart via user profile (JSONField)
+#  Persistent cart via user profile (JSONField)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_cart(request):
@@ -104,7 +104,7 @@ def persist_user_cart(request):
     profile.save()
     return Response({'message': 'Cart saved successfully'})
 
-# 💖 Wishlist views
+#  Wishlist views
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_wishlist(request):
