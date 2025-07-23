@@ -7,7 +7,7 @@ class Shoe(models.Model):
     image = models.ImageField(upload_to='shoes/')
     description = models.TextField(blank=True)
     in_stock = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)  # tracks creation time
+    created_at = models.DateTimeField(auto_now_add=True)
 
     CATEGORY_CHOICES = [
         ('Sneakers', 'Sneakers'),
@@ -15,12 +15,22 @@ class Shoe(models.Model):
         ('Sandals', 'Sandals'),
         ('Loafers', 'Loafers'),
         ('Formal', 'Formal'),
+        ('Heels', 'Heels'),  
     ]
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='Sneakers')
+
+    SECTION_CHOICES = [  
+        ('Men', 'Men'),
+        ('Ladies', 'Ladies'),
+        ('Kids', 'Kids'),
+    ]
+    section = models.CharField(max_length=20, choices=SECTION_CHOICES, default='Men')
+
     sizes = models.JSONField(default=list, blank=True)
 
     def __str__(self):
         return self.name
+
 
 class CartItem(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -37,6 +47,7 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.quantity} × {self.shoe.name} for {self.user.username}"
 
+
 class Order(models.Model):
     PAYMENT_CHOICES = [
         ('mpesa', 'M-Pesa'),
@@ -48,9 +59,9 @@ class Order(models.Model):
     total = models.DecimalField(max_digits=10, decimal_places=2)
     address = models.TextField()
     payment_method = models.CharField(max_length=10, choices=PAYMENT_CHOICES)
-    status = models.CharField(max_length=20, default='Pending')  # e.g. Pending, Paid, Shipped
+    status = models.CharField(max_length=20, default='Pending')
     paid = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)  # fixed: removed default
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Order #{self.id} by {self.user.username}"

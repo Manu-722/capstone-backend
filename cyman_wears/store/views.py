@@ -12,7 +12,6 @@ from rest_framework.response import Response
 def landing(request):
     return HttpResponse("Welcome to Cyman Wears API!")
 
-
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_shoes(request):
@@ -26,6 +25,7 @@ def get_shoes(request):
         'in_stock': shoe.in_stock,
         'created_at': shoe.created_at.isoformat(),
         'category': shoe.category,
+        'section': shoe.section, 
         'sizes': shoe.sizes,
     } for shoe in shoes]
     return Response(data)

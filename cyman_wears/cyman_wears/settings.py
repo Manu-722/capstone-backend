@@ -153,3 +153,4 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 LOGIN_REDIRECT_URL = '/shop/'  # Redirect after login
 SOCIALACCOUNT_LOGIN_REDIRECT_URL = '/shop/'  # Redirect after social login
+FRONTEND_URL = "http://localhost:5173"  

@@ -4,7 +4,7 @@ from .models import Shoe, CartItem
 class ShoeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shoe
-        fields = '__all__'
+        fields = '__all__'  
 
 class CartItemSerializer(serializers.ModelSerializer):
     shoe = ShoeSerializer()
