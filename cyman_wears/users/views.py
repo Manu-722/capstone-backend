@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.contrib.auth.tokens import default_token_generator
-
+from rest_framework_simplejwt.tokens import RefreshToken
 User = get_user_model()
 
 @api_view(['POST'])
@@ -39,7 +39,6 @@ def register_user(request):
     user = User.objects.create_user(username=username, password=password, email=email)
     return Response({'message': 'User registered successfully'}, status=status.HTTP_200_OK)
 
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_user(request):
@@ -49,15 +48,21 @@ def login_user(request):
 
     user = authenticate(request, username=username, password=password)
     if user is not None:
-        login(request, user)
+        login(request, user)  # optional for session login
+
+        
+        refresh = RefreshToken.for_user(user)
+
         return Response({
-            'token': 'mocked-token',  # Replace with actual token logic
-            'username': user.username,
-            'email': user.email
+            "token": {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            },
+            "username": user.username,
+            "email": user.email
         }, status=status.HTTP_200_OK)
     else:
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

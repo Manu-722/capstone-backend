@@ -13,6 +13,7 @@ from rest_framework.response import Response
 def landing(request):
     return HttpResponse("Welcome to Cyman Wears API!")
 
+# 👟 Shoes listing
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_shoes(request):
@@ -31,7 +32,7 @@ def get_shoes(request):
     } for shoe in shoes]
     return Response(data)
 
-# 🛒 Model-based cart (used during checkout)
+# 🛒 Live cart for checkout flow
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_cart(request):
@@ -55,10 +56,12 @@ def add_to_cart(request):
         data = json.loads(request.body)
         shoe_id = data.get('shoe_id')
         quantity = data.get('quantity', 1)
+
         item, created = CartItem.objects.get_or_create(user=request.user, shoe_id=shoe_id)
         if not created:
             item.quantity += quantity
         item.save()
+
         return JsonResponse({'message': 'Item added to cart'})
 
 @csrf_exempt
@@ -88,19 +91,23 @@ def place_order(request):
 
         return JsonResponse({'message': 'Order placed', 'order_id': order.id})
 
-# 🔄 Persistent cart via user profile (saved across logout/login)
+# 🧠 Cart persistence across login/logout
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def persist_user_cart(request):
     cart_data = request.data
-
     if not isinstance(cart_data, list):
-        return Response({'error': 'Invalid cart format'}, status=400)
+        return Response({'detail': 'Cart payload must be a list'}, status=400)
+    if not cart_data:
+        return Response({'detail': 'Cart is empty'}, status=400)
 
-    cleaned = []
+    valid_items = []
     for item in cart_data:
-        if item.get('id') and item.get('shoe') and item.get('quantity'):
-            cleaned.append({
+        if not isinstance(item, dict):
+            continue
+        required_fields = ['id', 'shoe', 'quantity']
+        if all(field in item for field in required_fields):
+            valid_items.append({
                 'id': item['id'],
                 'shoe': item['shoe'],
                 'image': item.get('image', ''),
@@ -110,44 +117,61 @@ def persist_user_cart(request):
                 'discounted': float(item.get('discounted', item.get('price', 0))),
             })
 
+    if not valid_items:
+        return Response({'detail': 'No valid cart items found'}, status=400)
+
     profile, _ = Profile.objects.get_or_create(user=request.user)
-    profile.cart_data = cleaned
+    profile.cart_data = valid_items
     profile.save()
+
+    print(f"[DEBUG] Cart saved for {request.user.username}: {valid_items}")
     return Response({'message': 'Cart saved successfully'})
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_cart(request):
-    profile, _ = Profile.objects.get_or_create(user=request.user)
-    saved_cart = profile.cart_data or []
+    try:
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        saved_cart = profile.cart_data if isinstance(profile.cart_data, list) else []
 
-    normalized = []
-    for item in saved_cart:
-        normalized.append({
-            'id': item.get('id'),
-            'shoe': item.get('shoe'),
-            'image': item.get('image', ''),
-            'description': item.get('description', ''),
-            'quantity': item.get('quantity', 1),
-            'price': float(item.get('price', 0)),
-            'discounted': float(item.get('discounted', item.get('price', 0))),
-        })
+        print(f"[DEBUG] Cart restore for {request.user.username}: {saved_cart}")
 
-    return Response({'items': normalized})
+        normalized = []
+        for item in saved_cart:
+            normalized.append({
+                'id': item.get('id'),
+                'shoe': item.get('shoe', 'Unnamed'),
+                'image': item.get('image', ''),
+                'description': item.get('description', ''),
+                'quantity': item.get('quantity', 1),
+                'price': float(item.get('price', 0)),
+                'discounted': float(item.get('discounted', item.get('price', 0))),
+            })
 
-# ❤️ Wishlist
+        return Response({'items': normalized})
+    except Exception as e:
+        print(f"[ERROR] Cart restore failed for {request.user.username}: {e}")
+        return Response({'detail': 'Corrupt cart data'}, status=400)
+
+# 💖 Wishlist endpoints
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_wishlist(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
-    return Response({'items': profile.wishlist or []})
+    wishlist = profile.wishlist if isinstance(profile.wishlist, list) else []
+    return Response({'items': wishlist})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_to_wishlist(request):
     item = request.data
     profile, _ = Profile.objects.get_or_create(user=request.user)
-    profile.wishlist.append(item)
+    wishlist = profile.wishlist if isinstance(profile.wishlist, list) else []
+
+    if item.get('id') and not any(w.get('id') == item['id'] for w in wishlist):
+        wishlist.append(item)
+
+    profile.wishlist = wishlist
     profile.save()
     return Response({'message': 'Added to wishlist'})
 
@@ -155,6 +179,7 @@ def add_to_wishlist(request):
 @permission_classes([IsAuthenticated])
 def remove_from_wishlist(request, item_id):
     profile, _ = Profile.objects.get_or_create(user=request.user)
-    profile.wishlist = [i for i in profile.wishlist if i.get('id') != item_id]
+    wishlist = profile.wishlist if isinstance(profile.wishlist, list) else []
+    profile.wishlist = [i for i in wishlist if i.get('id') != item_id]
     profile.save()
     return Response({'message': 'Removed from wishlist'})
