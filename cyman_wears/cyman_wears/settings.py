@@ -18,7 +18,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -152,6 +152,6 @@ SOCIALACCOUNT_ADAPTER = 'users.adapter.NoSignupAdapter'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
-LOGIN_REDIRECT_URL = '/shop/'  # Redirect after login
-SOCIALACCOUNT_LOGIN_REDIRECT_URL = '/shop/'  # Redirect after social login
+LOGIN_REDIRECT_URL = '/shop/' 
+SOCIALACCOUNT_LOGIN_REDIRECT_URL = '/shop/'  
 FRONTEND_URL = "http://localhost:5173"  
