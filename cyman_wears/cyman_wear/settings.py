@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'users',
     'payments',
     'cyman_wears',  # Main app
+    'cyman_wear',
 ]
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',            
