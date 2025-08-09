@@ -45,11 +45,13 @@ INSTALLED_APPS = [
 
     # Local apps
     # 'store',
-    'users',
-    'payments',
+    # 'users',
+    # 'payments',
     # 'cyman_wears',  # Main app
     # 'cyman_wear',
     'cyman_wears.store',
+    'cyman_wears.users',
+    'cyman_wears.payments',
 
 ]
 MIDDLEWARE = [
