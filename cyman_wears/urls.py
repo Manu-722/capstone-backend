@@ -32,13 +32,13 @@ def redirect_root(request):
 urlpatterns = [
     path('', redirect_root),
     path('admin/', admin.site.urls),
-    path('api/', include('store.urls')),
+    path('api/', include('cyman_wears.store.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/auth/', include('users.urls')),
-    path('api/', include('payments.urls')),
+    path('api/auth/', include('cyman_wears.users.urls')),
+    path('api/', include('cyman_wears.payments.urls')),
     # path('', include('payments.urls')),
-    path('api/', include('users.urls')),
+    path('api/', include('cyman_wears.users.urls')),
     path('accounts/', include('allauth.urls')), 
     
     
