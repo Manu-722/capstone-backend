@@ -44,10 +44,10 @@ INSTALLED_APPS = [
     'corsheaders',
 
     # Local apps
-    'store',
+    # 'store',
     'users',
     'payments',
-    'cyman_wears',  # Main app
+    # 'cyman_wears',  # Main app
     # 'cyman_wear',
     'cyman_wears.store',
 
